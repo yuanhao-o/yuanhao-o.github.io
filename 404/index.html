@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f3f5fb">
+<title>404 · 页面走丢了</title>
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('theme');
+      var dark = saved
+        ? saved === 'dark'
+        : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+</script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  /* ============ 主题变量 ============ */
+  :root {
+    color-scheme: light;
+    --bg: #f3f5fb;
+    --surface: #ffffff;
+    --text: #141824;
+    --text-dim: #6a7387;
+    --line: rgba(20, 24, 36, .08);
+    --a1: #4f6ef7;
+    --a2: #8b5cf6;
+    --a3: #22d3ee;
+    --grad-btn: linear-gradient(135deg, #4f6ef7 0%, #7c5cf6 100%);
+    --grad-code: linear-gradient(150deg, #4f6ef7 0%, #8b5cf6 52%, #22d3ee 100%);
+    --shadow-btn: 0 12px 28px -12px rgba(79, 110, 247, .65);
+    --shadow-btn-h: 0 18px 36px -14px rgba(79, 110, 247, .7);
+    --shadow-toggle: 0 6px 20px -8px rgba(20, 24, 36, .25);
+    --blob-op: .5;
+    --shape-op: .25;
+  }
+
+  [data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #0b0d14;
+    --surface: #151925;
+    --text: #eef1f8;
+    --text-dim: #8b93a7;
+    --line: rgba(255, 255, 255, .1);
+    --a1: #6d8bff;
+    --a2: #a78bfa;
+    --a3: #38e0f0;
+    --grad-btn: linear-gradient(135deg, #5b7cfa 0%, #8b5cf6 100%);
+    --grad-code: linear-gradient(150deg, #6d8bff 0%, #a78bfa 52%, #38e0f0 100%);
+    --shadow-btn: 0 12px 30px -12px rgba(109, 139, 255, .55);
+    --shadow-btn-h: 0 18px 38px -14px rgba(109, 139, 255, .68);
+    --shadow-toggle: 0 6px 20px -8px rgba(0, 0, 0, .7);
+    --blob-op: .28;
+    --shape-op: .32;
+  }
+
+  /* ============ 基础布局 ============ */
+  body {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100svh;
+    padding: 96px 24px 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                 "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    transition: background-color .45s ease, color .45s ease;
+  }
+
+  /* ============ 背景装饰 ============ */
+  .bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .blob {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: var(--blob-op);
+    transition: opacity .45s ease, background-color .45s ease;
+    will-change: transform;
+  }
+  .b1 { width: 46vmin; height: 46vmin; background: var(--a1); top: -14vmin; left: -10vmin; animation: drift1 20s ease-in-out infinite; }
+  .b2 { width: 38vmin; height: 38vmin; background: var(--a2); bottom: -12vmin; right: -8vmin; animation: drift2 24s ease-in-out infinite; }
+  .b3 { width: 28vmin; height: 28vmin; background: var(--a3); top: 58%; left: 6%;  animation: drift3 18s ease-in-out infinite; }
+
+  .shape {
+    position: absolute;
+    border: 2px solid var(--a1);
+    opacity: var(--shape-op);
+    transition: opacity .45s ease, border-color .45s ease;
+  }
+  .s1 { width: 26px; height: 26px; border-radius: 9px;        top: 20%; left: 12%;  animation: bob 8s  ease-in-out infinite; }
+  .s2 { width: 16px; height: 16px; border-radius: 50%; border-color: var(--a2); top: 74%; left: 84%; animation: bob 10s ease-in-out infinite -2s; }
+  .s3 { width: 20px; height: 20px; border-radius: 7px; border-color: var(--a3); top: 15%; right: 15%; animation: bob 9s ease-in-out infinite -4s; }
+  .s4 { width: 12px; height: 12px; border-radius: 50%; border-color: var(--a2); bottom: 15%; left: 20%; animation: bob 11s ease-in-out infinite -6s; }
+
+  /* ============ 主题切换按钮 ============ */
+  .theme-toggle {
+    position: fixed;
+    top: 22px;
+    right: 22px;
+    z-index: 20;
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    box-shadow: var(--shadow-toggle);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .3s cubic-bezier(.2, .8, .3, 1),
+                background-color .45s ease, border-color .45s ease,
+                box-shadow .3s ease, color .45s ease;
+  }
+  .theme-toggle:hover  { transform: translateY(-2px) scale(1.05); }
+  .theme-toggle:active { transform: translateY(0) scale(.95); }
+  .theme-toggle:focus-visible { outline: 3px solid var(--a3); outline-offset: 3px; }
+
+  .theme-toggle .icon {
+    position: absolute;
+    width: 21px;
+    height: 21px;
+    transition: opacity .3s ease, transform .45s cubic-bezier(.2, .8, .3, 1);
+  }
+  .theme-toggle .icon.moon { opacity: 0; transform: rotate(-90deg) scale(.4); }
+  [data-theme="dark"] .theme-toggle .icon.sun  { opacity: 0; transform: rotate(90deg) scale(.4); }
+  [data-theme="dark"] .theme-toggle .icon.moon { opacity: 1; transform: rotate(0deg) scale(1); }
+
+  /* ============ 主内容 ============ */
+  .wrap {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 620px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  /* 404 数字 */
+  .code {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 10px;
+    font-family: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont,
+                 "Segoe UI", Roboto, system-ui, sans-serif;
+    font-size: clamp(5.5rem, 20vw, 10rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -.03em;
+    user-select: none;
+    animation: rise .7s cubic-bezier(.2, .8, .3, 1) both;
+  }
+
+  .code span {
+    display: inline-block;
+    background-image: var(--grad-code);
+    -webkit-background-clip: text;
+            background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: floaty 3.4s ease-in-out infinite;
+  }
+  .code span:nth-child(1) { animation-delay: 0s; }
+  .code span:nth-child(3) { animation-delay: .36s; }
+
+  /* 数字 0 容器 */
+  .zero { 
+    position: relative; 
+    animation-delay: .18s;
+  }
+
+  /* ============ 星尘微光粒子 ============ */
+  .zero-particles {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1.6em;  /* 扩大一点活动范围 */
+    height: 1.6em;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: -1; /* 确保粒子在文字背后 */
+  }
+
+  .particle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    /* 取消文字渐变的继承，确保粒子能看到颜色 */
+    -webkit-text-fill-color: initial;
+    color: initial;
+    will-change: transform;
+  }
+
+  .p-blue   { background: var(--a1); box-shadow: 0 0 12px var(--a1); }
+  .p-purple { background: var(--a2); box-shadow: 0 0 12px var(--a2); }
+  .p-cyan   { background: var(--a3); box-shadow: 0 0 12px var(--a3); }
+
+  /* 标题 & 描述 */
+  .title {
+    margin: 0 0 14px;
+    font-size: clamp(1.45rem, 4.6vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -.01em;
+    line-height: 1.35;
+    animation: rise .7s cubic-bezier(.2, .8, .3, 1) .1s both;
+  }
+
+  .desc {
+    margin: 0 0 38px;
+    max-width: 30em;
+    font-size: clamp(.94rem, 2.6vw, 1.05rem);
+    line-height: 1.8;
+    color: var(--text-dim);
+    animation: rise .7s cubic-bezier(.2, .8, .3, 1) .18s both;
+  }
+
+  /* 返回主页按钮 */
+  .btn-wrap {
+    display: inline-block;
+    animation: rise .7s cubic-bezier(.2, .8, .3, 1) .26s both;
+  }
+
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 15px 34px;
+    border-radius: 999px;
+    background-image: var(--grad-btn);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+    box-shadow: var(--shadow-btn);
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .3s cubic-bezier(.2, .8, .3, 1), box-shadow .3s ease;
+  }
+  .btn svg { width: 18px; height: 18px; flex: none; }
+
+  .btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg,
+                transparent 30%,
+                rgba(255, 255, 255, .38) 50%,
+                transparent 70%);
+    transform: translateX(-130%);
+    transition: transform .75s ease;
+  }
+  .btn:hover            { transform: translateY(-3px); box-shadow: var(--shadow-btn-h); }
+  .btn:hover::after     { transform: translateX(130%); }
+  .btn:active           { transform: translateY(-1px) scale(.985); }
+  .btn:focus-visible    { outline: 3px solid var(--a3); outline-offset: 3px; }
+
+  /* ============ 动画 ============ */
+  @keyframes floaty {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-.085em); }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-22px) rotate(14deg); }
+  }
+  @keyframes drift1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(6vmin, 5vmin) scale(1.12); }
+  }
+  @keyframes drift2 {
+    0%, 100% { transform: translate(0, 0) scale(1.05); }
+    50%      { transform: translate(-7vmin, -4vmin) scale(.92); }
+  }
+  @keyframes drift3 {
+    0%, 100% { transform: translate(0, 0) scale(.95); }
+    50%      { transform: translate(5vmin, -6vmin) scale(1.15); }
+  }
+
+  /* ============ 响应式 & 无障碍 ============ */
+  @media (max-width: 640px) {
+    body { padding: 88px 20px 64px; }
+    .blob { filter: blur(55px); }
+    .s1, .s3 { display: none; }
+    .btn { padding: 14px 30px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+  
+  <div class="bg" aria-hidden="true">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <span class="blob b3"></span>
+    <span class="shape s1"></span>
+    <span class="shape s2"></span>
+    <span class="shape s3"></span>
+    <span class="shape s4"></span>
+  </div>
+
+  
+  <button class="theme-toggle" id="themeToggle" type="button"
+          aria-label="切换深色模式" aria-pressed="false">
+    <svg class="icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4.2"/>
+      <path d="M12 2.4v2.2M12 19.4v2.2M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2.4 12h2.2M19.4 12h2.2M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/>
+    </svg>
+    <svg class="icon moon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M20.5 14.2A8.6 8.6 0 1 1 9.8 3.5a6.8 6.8 0 0 0 10.7 10.7z"/>
+    </svg>
+  </button>
+
+  
+  <main class="wrap">
+    <div class="code">
+      <span>4</span>
+      <span class="zero">0<span class="zero-particles" id="particles"></span></span>
+      <span>4</span>
+    </div>
+
+    <h1 class="title">哎呀，页面走丢了</h1>
+    <p class="desc">
+      你要访问的页面可能已被移除、重命名，或者从来就不曾存在过。
+      不如回到主页，重新出发吧。
+    </p>
+
+    <div class="btn-wrap">
+      <a class="btn" href="https://yuanhao-o.github.io/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M19 12H5"/>
+          <path d="M12 19l-7-7 7-7"/>
+        </svg>
+        返回主页
+      </a>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var btn  = document.getElementById('themeToggle');
+
+      function apply(theme) {
+        root.setAttribute('data-theme', theme);
+        var isDark = theme === 'dark';
+        btn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+        btn.setAttribute('aria-label', isDark ? '切换到浅色模式' : '切换到深色模式');
+
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute('content', isDark ? '#0b0d14' : '#f3f5fb');
+      }
+
+      apply(root.getAttribute('data-theme') || 'light');
+
+      btn.addEventListener('click', function () {
+        var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        apply(next);
+        try { localStorage.setItem('theme', next); } catch (e) {}
+      });
+
+      var container = document.getElementById('particles');
+      if (!container) return;
+
+      var colors = ['p-blue', 'p-purple', 'p-cyan'];
+      var particleCount = 6; 
+      var particles = [];
+      var boundX = 50; 
+      var boundY = 70;
+
+      for (var i = 0; i < particleCount; i++) {
+        var el = document.createElement('i');
+        el.className = 'particle ' + colors[i % colors.length];
+        var size = Math.random() * 2.5 + 2;
+        el.style.width = size + 'px';
+        el.style.height = size + 'px';
+        el.style.opacity = Math.random() * 0.6 + 0.4;
+
+        container.appendChild(el);
+
+        // 初始化每个粒子的物理属性
+        particles.push({
+          el: el,
+          x: (Math.random() - 0.5) * boundX * 2, // 初始 X 坐标
+          y: (Math.random() - 0.5) * boundY * 2, // 初始 Y 坐标
+          vx: (Math.random() - 0.5) * 1.2,       // X 轴速度
+          vy: (Math.random() - 0.5) * 1.2,       // Y 轴速度
+        });
+      }
+
+      var lastTime = 0;
+      function animate(time) {
+        if (time - lastTime < 16) {
+          requestAnimationFrame(animate);
+          return;
+        }
+        lastTime = time;
+
+        for (var i = 0; i < particles.length; i++) {
+          var p = particles[i];
+          
+          p.x += p.vx;
+          p.y += p.vy;
+          if (p.x > boundX || p.x < -boundX) {
+            p.vx *= -1;
+            p.x = Math.max(-boundX, Math.min(boundX, p.x)); 
+          }
+          if (p.y > boundY || p.y < -boundY) {
+            p.vy *= -1;
+            p.y = Math.max(-boundY, Math.min(boundY, p.y));
+          }
+
+          if (Math.random() < 0.05) {
+            p.vx += (Math.random() - 0.5) * 0.4;
+            p.vy += (Math.random() - 0.5) * 0.4;
+            
+            var maxV = 1.5;
+            p.vx = Math.max(-maxV, Math.min(maxV, p.vx));
+            p.vy = Math.max(-maxV, Math.min(maxV, p.vy));
+          }
+          p.el.style.transform = 'translate(calc(-50% + ' + p.x + 'px), calc(-50% + ' + p.y + 'px))';
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      requestAnimationFrame(animate);
+    })();
+  </script>
+
+</body>
+</html>

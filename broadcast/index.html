@@ -1,0 +1,589 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>语音广播系统</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'%3E%3Cpath d='M512 469.333333c-46.933333 0-85.333333 38.4-85.333333 85.333333s38.4 85.333333 85.333333 85.333333 85.333333-38.4 85.333333-85.333333S558.933333 469.333333 512 469.333333zM768 554.666667c0-141.226667-114.773333-256-256-256s-256 114.773333-256 256c0 94.72 51.626667 177.066667 128 221.44l42.666667-74.24c-50.773333-29.866667-85.333333-84.053333-85.333333-147.2 0-94.293333 76.373333-170.666667 170.666667-170.666667s170.666667 76.373333 170.666667 170.666667c0 63.146667-34.56 117.333333-85.333333 147.2l42.666667 74.24C716.373333 731.733333 768 649.386667 768 554.666667zM512 128C276.48 128 85.333333 319.146667 85.333333 554.666667c0 157.866667 85.76 295.253333 212.906667 369.066667l42.666667-73.813333C239.36 790.613333 170.666667 680.96 170.666667 554.666667c0-188.586667 152.746667-341.333333 341.333333-341.333333s341.333333 152.746667 341.333333 341.333333c0 126.293333-68.693333 235.946667-170.666667 295.253333l42.666667 73.813333c127.573333-73.813333 213.333333-211.2 213.333333-369.066667C938.666667 319.146667 747.52 128 512 128z' fill='%23d81e06'/%3E%3C/svg%3E">	
+<script>
+(function() {
+  try {
+    var saved = localStorage.getItem('broadcast.theme');
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var theme = saved || (prefersDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+
+<link rel="stylesheet" href="../assets/css/broadcast/base.css?v=c4c37d9139">
+<link rel="stylesheet" href="../assets/css/broadcast/layout.css?v=daeab5ca1f">
+<link rel="stylesheet" href="../assets/css/broadcast/guide.css?v=b3684393d8">
+<link rel="stylesheet" href="../assets/css/broadcast/tips.css?v=cc566802de">
+<link rel="stylesheet" href="../assets/css/broadcast/lightbox.css?v=5fcbbebd8f">
+<link rel="stylesheet" href="../assets/css/broadcast/music.css?v=f2cb2b66a9">
+<link rel="stylesheet" href="../assets/css/broadcast/tts-expand.css?v=90bdf43694">
+</head>
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <symbol id="i-radio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/>
+    <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/>
+    <circle cx="12" cy="12" r="2"/>
+    <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/>
+    <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/>
+  </symbol>
+  <symbol id="i-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+  </symbol>
+  <symbol id="i-volume-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+    <line x1="22" y1="9" x2="16" y2="15"/>
+    <line x1="16" y1="9" x2="22" y2="15"/>
+  </symbol>
+  <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+    <polygon points="6 3 20 12 6 21 6 3"/>
+  </symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+    <rect x="6" y="4" width="4" height="16" rx="1"/>
+    <rect x="14" y="4" width="4" height="16" rx="1"/>
+  </symbol>
+  <symbol id="i-skip-back" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+    <polygon points="19 20 9 12 19 4 19 20"/>
+    <line x1="5" y1="19" x2="5" y2="5"/>
+  </symbol>
+  <symbol id="i-skip-forward" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+    <polygon points="5 4 15 12 5 20 5 4"/>
+    <line x1="19" y1="5" x2="19" y2="19"/>
+  </symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
+    <rect x="4" y="4" width="16" height="16" rx="2"/>
+  </symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="4"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+  </symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+  </symbol>
+  <symbol id="i-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+    <polyline points="17 21 17 13 7 13 7 21"/>
+    <polyline points="7 3 7 8 15 8"/>
+  </symbol>
+  <symbol id="i-headphones" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>
+  </symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="8" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"/>
+    <line x1="6" y1="6" x2="18" y2="18"/>
+  </symbol>
+  <symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="12" y1="11" x2="12" y2="16"/>
+    <line x1="12" y1="8" x2="12.01" y2="8"/>
+  </symbol>
+  <symbol id="i-music" viewBox="0 0 48 48" fill="none">
+    <rect x="4" y="12" width="40" height="28" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M31 31C33.7614 31 36 28.7614 36 26C36 23.2386 33.7614 21 31 21C28.2386 21 26 23.2386 26 26C26 28.7614 28.2386 31 31 31Z" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M12 22H18" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M12 30H18" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M8 40V44" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M40 40V44" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M8 12L36 4" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="i-minimize" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"/>
+  </symbol>
+   <symbol id="i-maximize" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="4" width="16" height="16" rx="2"/>
+  </symbol>
+
+  
+  <symbol id="i-repeat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="17 1 21 5 17 9"/>
+    <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+    <polyline points="7 23 3 19 7 15"/>
+    <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+  </symbol>
+  <symbol id="i-repeat-one" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="17 1 21 5 17 9"/>
+    <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+    <polyline points="7 23 3 19 7 15"/>
+    <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+    <text x="12" y="15.5" font-size="9" font-weight="700" text-anchor="middle" fill="currentColor" stroke="none">1</text>
+  </symbol>
+  <symbol id="i-shuffle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="16 3 21 3 21 8"/>
+    <line x1="4" y1="20" x2="21" y2="3"/>
+    <polyline points="21 16 21 21 16 21"/>
+    <line x1="15" y1="15" x2="21" y2="21"/>
+    <line x1="4" y1="4" x2="9" y2="9"/>
+  </symbol>
+  <symbol id="i-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"/>
+    <polyline points="12 5 19 12 12 19"/>
+  </symbol>
+</svg>
+
+<div class="app">
+  <div class="header">
+    <h1>
+      <button type="button" class="info-tip-btn" id="btnInfoTip" aria-label="系统说明">
+        <svg viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path class="bell-body"
+                d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
+          <path class="bell-clapper"
+                d="M10.3 21a1.94 1.94 0 0 0 3.4 0"
+                fill="none"/>
+        </svg>
+      </button>
+      <span>语音广播系统</span>
+      <span id="schedulerBadge" class="badge paused">调度: 已停止</span>
+    </h1>
+    <div class="header-info">
+      <div class="info-block">
+        <span class="lbl">当前时间</span>
+        <span class="val" id="nowTime">--:--:--</span>
+      </div>
+      <div class="info-block" id="nextPlayBlock">
+        <span class="lbl">下次播放</span>
+        <span class="val idle" id="nextPlayCountdown">--</span>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn music-toggle-btn" id="btnMusicToggle" data-tip="音乐系统（点击打开/关闭播放器）">
+        <svg class="icon" style="width:18px;height:18px;"><use href="#i-music"/></svg>
+        <span>背景音乐</span>
+      </button>      
+	  <button class="btn" id="btnTTSCheck" data-tip="检测系统语音包，并查看安装方法"><svg class="icon"><use href="#i-volume"/></svg> 语音包</button>
+      <button class="btn scheduler-btn stopped" id="btnToggleScheduler" data-tip="启动即可按照设置进行自动调度广播">
+  <svg class="icon"><use href="#i-play"/></svg> 点击启动</button>
+      <button class="btn" id="btnExportConfig" data-tip="导出所有配置与音频文件为 JSON">导出配置</button>
+      <button class="btn" id="btnImportConfig" data-tip="从 JSON 文件导入配置与音频">导入配置</button>
+      <button class="btn theme-toggle" id="btnThemeToggle" data-tip="切换夜间 / 白天模式">🌙</button>
+      <input type="file" id="importConfigInput" accept=".json" style="display:none">
+    </div>
+  </div>
+
+  <div class="statusbar">
+    <span><span id="stateDot" class="dot off"></span><span id="stateText">空闲</span></span>
+    <span id="nowPlayingStatus">等待调度</span>
+    <div class="right">
+      <span id="activeRangeStatus">—</span>
+    </div>
+  </div>
+
+  <div class="card playback">
+    <div class="card-header">
+      <span class="title">播放控制</span>
+      <span class="spacer"></span>
+      <span class="header-actions">
+        <span class="help-inline">拖动进度条可跳转 · 拖动音量条实时调节</span>
+      </span>
+    </div>
+    <div class="card-body">
+      <div class="now-playing">
+        <div class="info">
+          <div class="name" id="currentItemName">无</div>
+          <div class="meta" id="currentItemMeta">尚未播放任何项目</div>
+          <div class="progress">
+            <div class="bar">
+              <div class="fill progress-fill" id="progressFill" style="width:0%"></div>
+              <input type="range" id="progressRange" min="0" max="1000" value="0" step="1" data-tip="拖动可跳转到指定播放位置" disabled>
+            </div>
+            <div class="time"><span id="curTime">00:00</span><span id="totalTime">00:00</span></div>
+          </div>
+        </div>
+        <div class="controls">
+          <div class="row btns">
+            <button class="btn" id="btnPrev" data-tip="播放列表中的上一项"><svg class="icon"><use href="#i-skip-back"/></svg></button></button>
+            <button class="btn primary" id="btnPlayOnce" data-tip="立即播放一次（不进入自动调度）"><svg class="icon"><use href="#i-play"/></svg> 立即播放一次</button>
+            <button class="btn" id="btnSkip" data-tip="跳过当前播放项"><svg class="icon"><use href="#i-skip-forward"/></svg></button>
+            <button class="btn danger" id="btnStop" data-tip="停止所有播放"><svg class="icon"><use href="#i-stop"/></svg> 停止</button>
+          </div>
+          <div class="row">
+            <div style="flex:1" class="volume">
+              <span style="font-size:11px;color:var(--text-2);width:36px;">音量</span>
+              <input type="range" id="volumeRange" min="0" max="100" value="80" data-tip="拖动调整广播音量">
+              <span id="volumeLabel" style="font-size:11px;color:var(--text-2);width:36px;text-align:right;">80%</span>
+              <button class="btn small" id="btnMute" data-tip="静音 / 取消静音">🔊</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="left-col">
+    <div class="card playlist-card">
+      <div class="card-header">
+        <span class="title">
+          <span class="count" id="playlistCount">0</span>
+          <span>播放列表</span>
+        </span>
+        <span class="spacer"></span>
+        <span class="header-actions">
+          <label class="switch" data-tip="列表整体循环，播完最后一项后回到第一项">
+            <input type="checkbox" id="playlistLoop">
+            <span class="slider"></span>
+          </label>
+          <span style="font-size:11px;color:var(--text-3);font-weight:500;">整体循环</span>
+        </span>
+      </div>
+      <div class="card-body no-pad">
+        <div id="playlistContainer">
+          <div class="empty">播放列表为空，请添加音频或 TTS 项目</div>
+        </div>
+      </div>
+      <div class="card-toolbar">
+        <button class="btn primary" id="btnAddAudio" data-tip="从音频库选择文件加入播放列表">添加音频</button>
+        <button class="btn primary" id="btnAddTTS" data-tip="新建一条 TTS 文字转语音播报">新建 TTS(文字转语音)</button>
+        <button class="btn" id="btnClearPlaylist" data-tip="清空整个播放列表（音频库不受影响）">清空</button>
+      </div>
+    </div>
+
+    <div class="card audio-card">
+      <div class="card-header">
+        <span class="title">
+          <span class="count" id="audioCount">0</span>
+          <span>音频库</span>
+        </span>
+        <span class="spacer"></span>
+        <button class="btn small" id="btnAddAllAudio" data-tip="把音频库所有文件一次性加入播放列表，方便编排广播+音乐">全部加入列表</button>
+      </div>
+      <div class="card-body">
+        <label class="import-area" id="audioDrop">
+          <input type="file" id="audioFileInput" accept="audio/*" multiple>
+          <button type="button" class="btn primary btn-import" id="btnImportAudioTrigger" data-tip="从本地选择音频文件导入">导入音频</button>
+          <div class="drop-tip">或拖放文件到此处<br>支持 MP3 / WAV / OGG / M4A</div>
+        </label>
+        <div id="audioList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card tts-card">
+    <div class="card-header">
+      <span class="title">
+        <span class="count" id="ttsEditorMode">新</span>
+        <span>编辑文字转语音（TTS）</span>
+      </span>
+      <span class="spacer"></span>
+      <span class="header-actions">
+        <span class="help-inline" id="ttsEditorStatus">未编辑</span>
+      </span>
+    </div>
+    <div class="card-body">
+      <div class="form-grid">
+        <label>音频名称</label>
+        <input type="text" id="ttsName" placeholder="可以选择为本音频设置备注" data-tip="起个好识别的名字，例如「今日特惠播报」">
+		
+        <label>播报文本</label>
+        <div class="tts-text-container" id="ttsTextContainer">
+            <div class="tts-text-wrap" id="ttsTextWrap">
+                <textarea id="ttsText" rows="4" placeholder="在此输入要转换为语音的文字" data-tip="输入要朗读的文字内容"></textarea>
+                <button class="tts-expand-btn" id="btnTtsExpand" type="button">
+                    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M22 42H6V26" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M26 6H42V22" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <label>语音选择</label>
+        <select id="ttsVoice" data-tip="选择朗读使用的语音音色，推荐晓晓/xiaoxiao，声音更自然"></select>
+
+        <label>语速调整</label>
+        <div style="display:flex;align-items:center;gap:6px;" data-tip="数值越大语速越快（默认 1.0 ）">
+          <input type="range" id="ttsRate" min="0.5" max="1.5" step="0.1" value="1.0" style="flex:1;">
+          <span id="ttsRateLabel" style="font-size:11px;color:var(--text-3);width:24px;text-align:right;">1.0</span>
+        </div>
+
+        <label>音调调整</label>
+        <div style="display:flex;align-items:center;gap:6px;" data-tip="数值越大音调越高（默认 1.0 ）">
+          <input type="range" id="ttsPitch" min="0.5" max="1.5" step="0.1" value="1.0" style="flex:1;">
+          <span id="ttsPitchLabel" style="font-size:11px;color:var(--text-3);width:24px;text-align:right;">1.0</span>
+        </div>
+
+        <label>循环间隔</label>
+        <div style="display:flex;align-items:center;gap:6px;" data-tip="每次播放完后等待下次播放的时间（秒）">
+          <input type="number" id="ttsInterval" min="0" step="1" value="30" style="flex:1;">
+          <span style="font-size:11px;color:var(--text-3);">秒</span>
+        </div>
+
+        <label>单项循环</label>
+        <label class="switch" data-tip="开启后仅循环播放此项"><input type="checkbox" id="ttsLoop"><span class="slider"></span></label>
+
+        <label>播放次数</label>
+        <input type="number" id="ttsPlayCount" min="0" step="1" value="0" placeholder="0=无限" data-tip="限制此项最多播放的次数，0 表示无限">
+
+        <label>生效时段</label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span id="ttsRangesDisplay" style="flex:1;font-size:11px;color:var(--text-3);">全天生效</span>
+          <button class="btn small" id="btnTTSRangesEdit" data-tip="设置此项生效的时间段，也可在左侧播放列表设置时段">编辑时段</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-toolbar">
+      <button class="btn" id="btnTTSTest" data-tip="使用当前设置朗读一次，仅试听不保存"><svg class="icon"><use href="#i-headphones"/></svg> 试听</button>
+      <button class="btn primary" id="btnTTSSave" data-tip="将当前 TTS 保存到播放列表"><svg class="icon"><use href="#i-save"/></svg> 保存</button>
+      <button class="btn" id="btnTTSReset" data-tip="清空 TTS 编辑区，开始新建">重置</button>
+    </div>
+  </div>
+
+  <div class="card logs-card">
+    <div class="card-header">
+      <span class="title">
+        <span class="count" id="logCount">0</span>
+        <span>运行日志</span>
+      </span>
+      <span class="spacer"></span>
+      <div class="header-actions">
+        <button class="btn small" id="btnExportLogs" data-tip="将运行日志导出为 txt 文件">导出日志</button>
+        <button class="btn small" id="btnClearLogs" data-tip="清空所有运行日志">清空日志</button>
+        <button class="btn small danger" id="btnClearAll" data-tip="⚠️ 清除所有数据（音频/播放列表/日志）">清除全部数据</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="logs" id="logsContainer">
+        <div class="empty">暂无日志</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="modalTitle">标题</span>
+      <button class="close" id="modalClose" data-tip="关闭">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<div class="music-float-card" id="musicFloatCard">
+  <div class="music-float-header" id="musicDragHandle">
+    <svg class="icon"><use href="#i-music"/></svg>
+    <span class="music-float-title">背景音乐</span>
+    <span class="music-float-spacer"></span>
+    <button class="music-float-btn" id="btnMusicMinimize" data-tip="最小化">
+      <svg class="icon"><use href="#i-minimize"/></svg>
+    </button>
+    <button class="music-float-btn" id="btnMusicClose" data-tip="关闭">
+      <svg class="icon"><use href="#i-x"/></svg>
+    </button>
+  </div>
+  <div class="music-float-body" id="musicFloatBody">
+    <div class="music-now" id="musicNowPlaying">未播放</div>
+
+    <div class="music-progress-bar">
+      <div class="music-progress-fill" id="musicProgressFill"></div>
+      <input type="range" id="musicProgressRange" min="0" max="1000" value="0" step="1" data-tip="点击/拖动跳转播放位置">
+    </div>
+    <div class="music-time">
+      <span id="musicCurTime">00:00</span>
+      <span id="musicTotalTime">00:00</span>
+    </div>
+
+    
+    <div class="music-controls">
+      <button id="btnMusicPrev" data-tip="上一首"><svg class="icon"><use href="#i-skip-back"/></svg></button>
+      <button id="btnMusicPlayPause" class="music-play-btn" data-tip="播放 / 暂停"><svg class="icon"><use href="#i-play"/></svg></button>
+      <button id="btnMusicNext" data-tip="下一首"><svg class="icon"><use href="#i-skip-forward"/></svg></button>
+
+      
+      <div class="music-pop-wrap" id="musicModeWrap">
+        <button id="btnMusicMode" data-tip="播放模式：列表循环" aria-haspopup="true">
+          <svg class="icon"><use href="#i-repeat"/></svg>
+        </button>
+        <div class="music-pop-menu" id="musicModeMenu" role="menu">
+          <button type="button" data-mode="list">
+            <svg class="icon"><use href="#i-repeat"/></svg><span>列表循环</span>
+          </button>
+          <button type="button" data-mode="order">
+            <svg class="icon"><use href="#i-arrow-right"/></svg><span>顺序播放</span>
+          </button>
+          <button type="button" data-mode="random">
+            <svg class="icon"><use href="#i-shuffle"/></svg><span>随机播放</span>
+          </button>
+          <button type="button" data-mode="single">
+            <svg class="icon"><use href="#i-repeat-one"/></svg><span>单曲循环</span>
+          </button>
+        </div>
+      </div>
+
+      
+      <div class="music-pop-wrap" id="musicVolWrap">
+        <button id="btnMusicVolume" data-tip="音量" aria-haspopup="true">
+          <svg class="icon"><use href="#i-volume"/></svg>
+        </button>
+        <div class="music-pop-panel" id="musicVolPanel">
+          <input type="range" id="musicVolume" min="0" max="100" value="15">
+          <span id="musicVolLabel">15%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="music-opt-row" data-tip="开启后，播放广播时自动暂停音乐"><span>广播时自动暂停</span>
+      <label class="switch"><input type="checkbox" id="musicAutoPause" checked><span class="slider"></span></label>
+    </div>
+	
+	<div class="music-opt-row" data-tip="开启后，每段广播后会播放一首音乐作为间奏；音乐播完自动继续下一段广播。此时设置的「循环间隔」暂不生效"><span>广播与音乐交替播放</span>
+	  <label class="switch"><input type="checkbox" id="musicInterleave"><span class="slider"></span></label>
+</div>
+
+    <div class="music-list" id="musicList"></div>
+
+    
+    <div class="music-playlist-import">
+      <input type="text" id="musicPlaylistInput" placeholder="输入网易云歌单ID或链接" value="2786411282">
+      <button id="btnImportPlaylist">导入</button>
+      <button id="btnClearMusicList" class="danger">清空</button>
+    </div>
+	
+    <div class="music-add-row">
+      <input type="text" id="musicUrlInput" placeholder="粘贴音乐URL">
+      <button class="primary" id="btnAddMusic">添加</button>
+      <button id="btnUploadMusic">上传</button>
+      <input type="file" id="musicFileInput" accept="audio/*" multiple style="display:none">
+    </div>
+  </div>
+
+  <div class="music-toast-container" id="musicToastContainer"></div>
+  <div class="music-tooltip" id="musicTooltip"></div>
+</div>
+
+<div class="info-pop-mask" id="infoPopMask">
+  <div class="info-pop-card" id="infoPopCard" role="dialog" aria-modal="true" aria-label="系统说明">
+    <div class="info-pop-header">
+      <span class="info-pop-title">使用说明</span>
+      <button class="info-pop-close" id="infoPopClose" type="button" aria-label="关闭">×</button>
+    </div>
+    <div class="info-pop-body" id="infoPopBody">
+      
+      <h4>欢迎使用语音广播系统</h4>
+      <p>本系统用于超市 / 门店的语音播报与背景音乐管理。支持 TTS 文字转语音、音频导入、按时段自动调度等功能。</p>
+
+      <h4>快速上手</h4>
+      <ol>
+        <li>在「编辑文字转语音」中新建 TTS 项目或导入本地音频文件；</li>
+        <li>把项目加入「播放列表」，设置间隔与生效时段；</li>
+        <li>点击右上角「点击启动」开始自动调度。</li> 
+		<li>「背景音乐」可进行音乐设置（推荐使用）。</li>
+		
+      </ol>
+
+      <h4>界面示意</h4>
+      <p>点击下图可放大查看：</p>
+      <img class="info-img" src="../assets/img/guide-01.png" alt="界面示意图" data-zoom="1">
+
+      <h4>常见问题</h4>
+      <p><b>Q：TTS 没有声音？</b><br>A：点右上角「语音包」检测中文语音，推荐使用 Microsoft Edge浏览器。检查是否已经启动调度，播放列表是否「启用」音频，是否在「生效时段」内。</p>
+      <p><b>Q：如何打开背景音乐？</b><br>A：点右上角红色圆形音乐按钮，可粘贴 URL 或上传本地文件。</p>
+      
+
+    </div>
+  </div>
+</div>
+
+<div class="img-lightbox" id="imgLightbox">
+  <img id="imgLightboxImg" src="" alt="">
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<div class="global-tooltip" id="globalTooltip"></div>
+
+<div class="edge-tip-mask" id="edgeTipMask">
+  <div class="edge-tip-modal">
+    <div class="edge-tip-header">
+      <span class="tip-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </span>
+      <span>浏览器兼容性提示</span>
+    </div>
+    <div class="edge-tip-body">
+      <span class="env-line">当前环境：<b id="edgeTipBrowser">-</b> · <b id="edgeTipOS">-</b></span>
+
+      <p>本系统的语音合成功能依赖<b>浏览器调用系统语音引擎</b>。在非 Edge 浏览器（如 Chrome、Firefox、Safari、国产浏览器等）中，您可能遇到以下问题：</p>
+
+      <ul>
+        <li>❌ <b>语音下拉框为空</b>，找不到"晓晓"等中文音色</li>
+        <li>❌ TTS 试听时<b>没有声音</b>，或只用英文腔调读中文</li>
+        <li>❌ 朗读卡顿、断断续续，或播报中途突然停止</li>
+        <li>❌ 切换到其他标签页后，广播<b>被浏览器自动暂停</b></li>
+      </ul>
+
+      <p><b>推荐直接使用 Microsoft Edge 浏览器打开本系统</b>，无需任何额外安装，且内置"晓晓"等高质量中文语音，稳定可靠。</p>
+
+      <div id="edgeTipWinSteps">
+        <p style="margin-top:16px;"><b>如果坚持使用当前浏览器，请按以下步骤安装系统中文语音（Windows）：</b></p>
+        <ol>
+          <li>打开 <b>Windows 设置</b>（按 <b>Win + I</b>）</li>
+          <li>进入 <b>时间和语言 → 语言和区域</b></li>
+          <li>找到"中文（简体，中国）"，点击右侧 <b>⋯ → 语言选项</b></li>
+          <li>在"语音"区域，点击<b>下载</b>按钮安装以下语音包（推荐）：<br>· Microsoft 晓晓（女声，自然）<br>· Microsoft 云希（男声，自然）</li>
+          <li>安装完成后<b>刷新本页面</b>，再点"语音包"按钮验证</li>
+        </ol>
+      </div>
+
+      <div id="edgeTipMacSteps" style="display:none;">
+        <p style="margin-top:16px;"><b>如果坚持使用当前浏览器，请按以下步骤安装系统中文语音（macOS）：</b></p>
+        <ol>
+          <li>打开 <b>系统设置 → 辅助功能 → 朗读内容</b></li>
+          <li>点击 <b>系统语音 → 管理语音</b></li>
+          <li>找到"中文（中国大陆）"，勾选并下载 <b>Tingting</b> 或 <b>Meijia</b></li>
+          <li>下载完成后<b>刷新本页面</b></li>
+        </ol>
+      </div>
+
+      <div id="edgeTipOtherSteps" style="display:none;">
+        <p style="margin-top:16px;"><b>建议：</b>直接安装并使用 <b>Microsoft Edge 浏览器</b>打开本系统，可跳过所有语音包配置步骤。</p>
+      </div>
+
+      <p class="edge-tip-note">💡 <b>建议操作：</b>点击下方"用 Edge 打开"按钮，系统会自动用 Edge 浏览器重新打开本页面。</p>
+    </div>
+    <div class="edge-tip-footer">
+      <button class="btn" id="edgeTipKnow" type="button">我知道了</button>
+      <button class="btn primary" id="edgeTipOpenEdge" type="button">
+        <svg class="icon"><use href="#i-play"/></svg> 用 Edge 打开
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/broadcast/core.js?v=6c20096390"></script>
+<script src="../assets/js/broadcast/storage.js?v=26f1f67272"></script>
+<script src="../assets/js/broadcast/tts.js?v=40a162b68a"></script>
+<script src="../assets/js/broadcast/music.js?v=336194d6b2"></script>
+<script src="../assets/js/broadcast/scheduler.js?v=46f1f90fe2"></script>
+<script src="../assets/js/broadcast/ui.js?v=7b080bd548"></script>
+<script src="../assets/js/broadcast/events.js?v=14cdabbc34"></script>
+<script src="../assets/js/broadcast/actions.js?v=5ca2de5b91"></script>
+<script src="../assets/js/broadcast/boot.js?v=b0cf2b4edc"></script>
+<script src="../assets/js/broadcast/tour.js?v=c353de9d83"></script>
+<script src="../assets/js/broadcast/info-tip.js?v=ab6b5ba625"></script>
+<script src="../assets/js/broadcast/tts-expand.js?v=21703eb207"></script>
+</body>
+</html>
