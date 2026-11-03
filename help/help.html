@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0d14">
+<title>帮助</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ccircle%20cx='50'%20cy='50'%20r='44'%20fill='none'%20stroke='%23e63946'%20stroke-width='7'/%3E%3Ctext%20x='50'%20y='50'%20text-anchor='middle'%20dominant-baseline='central'%20font-family='STXingkai%2CXingkai%20SC%2CSTKaiti%2CKaiTi%2Cserif'%20font-size='58'%20fill='%23111'%3E%E6%8B%BE%3C/text%3E%3C/svg%3E">
+<script>
+  (function () {
+    try {
+      var saved = localStorage.getItem('theme');
+      var dark = saved ? saved === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+</script>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0d14;
+    --text: #ffffff;
+    --text-sub: rgba(255, 255, 255, 0.55);
+    --glass: rgba(255, 255, 255, 0.08);
+    --glass-border: rgba(255, 255, 255, 0.15);
+    --hover-bg: rgba(255, 255, 255, 0.15);
+  }
+
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg: #f3f5fb;
+    --text: #141824;
+    --text-sub: rgba(20, 24, 36, 0.55);
+    --glass: rgba(255, 255, 255, 0.5);
+    --glass-border: rgba(0, 0, 0, 0.1);
+    --hover-bg: rgba(0, 0, 0, 0.05);
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { height: 100%; }
+
+  body {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color .45s ease, color .45s ease;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 620px;
+    padding: clamp(24px, 5vw, 44px);
+    border-radius: 24px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(18px);
+    backdrop-filter: blur(18px);
+    text-align: center;
+  }
+
+  h1 {
+    margin: 0 0 14px;
+    font-size: clamp(1.5rem, 4.5vw, 2rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: 0 0 26px;
+    font-size: clamp(0.9rem, 2.4vw, 1rem);
+    line-height: 1.8;
+    color: var(--text-sub);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 26px;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass);
+    color: var(--text);
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color .25s ease, transform .25s cubic-bezier(.25, 1, .5, 1);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn:hover { background: var(--hover-bg); transform: translateY(-2px); }
+  .btn:active { transform: translateY(0) scale(.98); }
+  .btn svg { width: 16px; height: 16px; }
+</style>
+</head>
+<body>
+
+<main class="wrap">
+  <h1>帮助</h1>
+  <p>这个页面还在整理中，内容稍后补充。</p>
+  <a class="btn" href="https://yuanhao-o.github.io/">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M19 12H5M12 19l-7-7 7-7"/>
+    </svg>
+    返回主页
+  </a>
+</main>
+
+</body>
+</html>

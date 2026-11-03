@@ -1,0 +1,65 @@
+/*! home/help-fab.css —— 主页右下角「帮助」入口
+ *  z-index 20：高于主内容(10)、低于侧边面板(40)，面板打开时会被自然遮住。 */
+
+.help-fab {
+  position: fixed;
+  right: clamp(12px, 2vw, 20px);
+  bottom: clamp(12px, 2vw, 20px);
+  z-index: 20;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  color: var(--text);
+  text-decoration: none;
+  opacity: .5;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity .3s ease,
+              transform .3s cubic-bezier(.25, 1, .5, 1),
+              background-color .3s ease;
+}
+
+.help-fab:hover,
+.help-fab:focus-visible {
+  opacity: 1;
+  transform: scale(1.08);
+  background: var(--hover-bg);
+  outline: none;
+}
+
+.help-fab:focus-visible {
+  box-shadow: 0 0 0 2px var(--glass-border);
+}
+
+.help-fab:active {
+  transform: scale(.95);
+}
+
+.help-fab svg {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 720px) {
+  .help-fab {
+    width: 28px;
+    height: 28px;
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    opacity: .6;
+  }
+
+  .help-fab svg {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+@media (hover: none) {
+  .help-fab { opacity: .6; }
+}
