@@ -12,6 +12,12 @@
   THREE.WebGLRenderer = function () {
     var r = new (Function.prototype.bind.apply(R, [null].concat([].slice.call(arguments))))();
     (window.__renderers = window.__renderers || []).push(r);
+    var applyPR = function () {
+      var pr = Math.min(window.devicePixelRatio || 1, 2);
+      if (pr > 1 && r.getPixelRatio() !== pr) r.setPixelRatio(pr);
+    };
+    applyPR();
+    window.addEventListener('resize', applyPR);
     var orig = r.render;
     r.render = function (scene, camera) {
       window.__scene = scene;

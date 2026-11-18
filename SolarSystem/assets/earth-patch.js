@@ -46,8 +46,10 @@
         'uniform vec3 uSunDir;',
         'varying vec2 vUv;',
         'varying vec3 vNw;',
+        'void main(){',
         nightMaskGLSL(),
-        'gl_FragColor = vec4(0.0, 0.0, 0.0, night * 0.36);'
+        '  gl_FragColor = vec4(0.0, 0.0, 0.0, night * 0.62);',
+        '}'
       ].join('\n'),
       transparent: true,
       depthWrite: false
@@ -62,12 +64,14 @@
         'uniform float uGain;',
         'varying vec2 vUv;',
         'varying vec3 vNw;',
+        'void main(){',
         nightMaskGLSL(),
-        'vec3 c = texture2D(uNightTex, vUv).rgb;',
-        'vec3 c2 = max(c - vec3(0.03, 0.04, 0.08), 0.0);',
-        'float lum = max(max(c2.r, c2.g), c2.b);',
-        'vec3 col = vec3(1.0, 0.66, 0.38) * pow(lum, 1.2) * 9.0 * uGain;',
-        'gl_FragColor = vec4(col, night * step(0.002, lum));'
+        '  vec3 c = texture2D(uNightTex, vUv).rgb;',
+        '  vec3 c2 = max(c - vec3(0.03, 0.04, 0.08), 0.0);',
+        '  float lum = max(max(c2.r, c2.g), c2.b);',
+        '  vec3 col = vec3(1.0, 0.66, 0.38) * pow(lum, 1.2) * 9.0 * uGain;',
+        '  gl_FragColor = vec4(col, night * step(0.002, lum));',
+        '}'
       ].join('\n'),
       transparent: true,
       blending: THREE.AdditiveBlending,
@@ -86,7 +90,6 @@
     glow.name = '__earth_glow_shell';
     mesh.add(glow);
 
-    window.__earthInfo = { mode: 'shells', shells: 2 };
   }
 
   function findEarth(scene) {
@@ -116,9 +119,7 @@
       uNightTex: { value: nightTexture() }
     };
     buildShells(earth);
-    window.__earthMesh = earth;
-    window.__earthU = U;
-    window.__earthFrame = tick;
+    window.__earthTick = tick;
   }
 
   boot();
