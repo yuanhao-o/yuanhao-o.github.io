@@ -1,5 +1,6 @@
 /* 视觉语言：近黑底 / 薄荷灰绿 / 1px 细线 / 全圆胶囊 / 极淡玻璃 */
 :root{
+  color-scheme:dark;
   --bg:#030609;
   --ink:#e5eeed;
   --ink-2:#a9bdc1;
@@ -17,7 +18,7 @@
   --pill:30px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
+html,body{height:100%;background:#030609}
 body{
   margin:0;background:var(--bg);color:var(--ink);overflow:hidden;
   font-family:Arial,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
@@ -25,7 +26,7 @@ body{
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
 }
 canvas{display:block}
-#scene{position:fixed;inset:0;width:100%;height:100%}
+#scene{position:fixed;inset:0;width:100%;height:100%;background:#030609}
 #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
 .vignette{
   position:fixed;inset:0;z-index:3;pointer-events:none;
@@ -105,13 +106,16 @@ input[type=range]:focus-visible{outline:2px solid var(--mint);outline-offset:6px
 .panel{
   position:fixed;right:22px;top:22px;bottom:22px;width:384px;z-index:8;
   background:var(--glass-2);border:1px solid var(--line);border-radius:var(--radius);
-  backdrop-filter:blur(25px) saturate(120%);-webkit-backdrop-filter:blur(25px) saturate(120%);
   box-shadow:0 16px 80px rgba(0,0,0,.55);
   padding:28px 26px 24px;overflow-y:auto;overscroll-behavior:contain;
-  transform:translateX(calc(100% + 40px));opacity:0;pointer-events:none;
-  transition:transform .55s cubic-bezier(.22,.9,.28,1),opacity .4s ease;
+  transform:translateX(calc(100% + 40px));opacity:0;pointer-events:none;visibility:hidden;
+  transition:transform .55s cubic-bezier(.22,.9,.28,1),opacity .4s ease,visibility 0s .55s;
 }
-.panel.open{transform:none;opacity:1;pointer-events:auto}
+.panel.open{
+  transform:none;opacity:1;pointer-events:auto;visibility:visible;
+  backdrop-filter:blur(25px) saturate(120%);-webkit-backdrop-filter:blur(25px) saturate(120%);
+  transition:transform .55s cubic-bezier(.22,.9,.28,1),opacity .4s ease,visibility 0s 0s;
+}
 .panel::-webkit-scrollbar{width:4px}
 .panel::-webkit-scrollbar-thumb{background:rgba(176,207,199,.22);border-radius:3px}
 .panel::-webkit-scrollbar-track{background:transparent}
@@ -174,7 +178,12 @@ input[type=range]:focus-visible{outline:2px solid var(--mint);outline-offset:6px
   .date{min-width:auto;font-size:12px}
   .chips{flex-wrap:wrap}
   .sep{display:none}
-  .panel{right:0;left:0;top:auto;bottom:0;width:auto;max-height:66vh;border-radius:20px 20px 0 0;padding:24px 20px 18px;transform:translateY(105%)}
+  .panel{right:0;left:0;top:auto;bottom:0;width:auto;max-height:46vh;border-radius:20px 20px 0 0;padding:16px 18px 12px;transform:translateY(105%)}
+  .dock,.panel,.panel.open{
+    backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  }
+  .dock{background:rgba(6,12,15,.95)}
+  .panel,.panel.open{background:rgba(8,15,19,.985)}
   .panel.open{transform:none}
   .hint{bottom:154px;font-size:9px;letter-spacing:.14em}
   .orb{width:52px;height:52px}
