@@ -153,8 +153,16 @@
   var SEG_W = 128, SEG_H = 80;
   var overlayObjects = [];
   var bodyRoots = [];
+  var meta = {};
   var labelsEl = null;
-  var focusActive = false;
+  var ISOLATE_AT = 10;
+  var MIN_PICK_PX = 14;
+  var focusKey = '';
+  var _wp = new THREE.Vector3();
+  var _ws = new THREE.Vector3();
+  var _pv = new THREE.Vector3();
+  var _pq = new THREE.Vector3();
+  var _ps = new THREE.Vector3();
 
   function collectOverlay(scene) {
     scene.traverse(function (o) {
@@ -163,26 +171,160 @@
     });
   }
 
-  function updateFocusIsolation() {
+  function isShown(o) {
+    while (o) {
+      if (o.visible === false) return false;
+      o = o.parent;
+    }
+    return true;
+  }
+
+  function bodyRadius(e) {
+    e.mesh.getWorldScale(_ws);
+    var g = e.mesh.geometry;
+    var r = (g && g.parameters && g.parameters.radius) || 1;
+    return Math.abs(r * _ws.x);
+  }
+
+  function bodyRatio(e) {
     var cam = window.__camera;
-    if (!cam || !bodyRoots.length) return;
+    if (!cam) return 1e9;
+    e.mesh.getWorldPosition(_wp);
+    return cam.position.distanceTo(_wp) / Math.max(bodyRadius(e), 1e-4);
+  }
+
+  function contains(root, obj) {
+    while (obj) {
+      if (obj === root) return true;
+      obj = obj.parent;
+    }
+    return false;
+  }
+
+  function panelTarget() {
+    var panel = document.getElementById('panel');
+    if (!panel || !panel.classList.contains('open')) return null;
+    var el = document.getElementById('pName');
+    return { zh: el ? el.textContent.replace(/\s+/g, '') : '' };
+  }
+
+  function updateFocusIsolation() {
+    var f = panelTarget();
+    var on = false, keep = [], best = 1e9, i, id;
+    if (f) {
+      var sel = null;
+      for (id in meta) {
+        if (meta[id].data.zh === f.zh) { sel = meta[id].obj; break; }
+      }
+      for (i = 0; i < bodyRoots.length; i++) {
+        var r = bodyRatio(bodyRoots[i]);
+        if (r < best) best = r;
+        if (sel && contains(bodyRoots[i].root, sel)) keep.push(bodyRoots[i]);
+        else if (!sel && f.zh && bodyRoots[i].zh === f.zh) keep.push(bodyRoots[i]);
+      }
+      for (i = 0; i < keep.length; i++) best = Math.min(best, bodyRatio(keep[i]));
+      on = best < ISOLATE_AT;
+    }
+    var key = (on ? '1' : '0') + '|' + (on ? keep.map(function (e) { return e.zh; }).join(',') : '');
+    if (key === focusKey) return;
+    focusKey = key;
     if (!labelsEl || !labelsEl.isConnected) labelsEl = document.getElementById('labels');
-    var best = 1e9, target = null;
-    for (var i = 0; i < bodyRoots.length; i++) {
-      var o = bodyRoots[i].mesh;
-      var e = o.matrixWorld.elements;
-      var dx = cam.position.x - e[12], dy = cam.position.y - e[13], dz = cam.position.z - e[14];
-      var d = Math.sqrt(dx * dx + dy * dy + dz * dz) / Math.max(0.001, Math.abs(o.scale.x));
-      if (d < best) { best = d; target = bodyRoots[i]; }
-    }
-    var on = best < 8;
-    if (on === focusActive) return;
-    focusActive = on;
     if (labelsEl) labelsEl.style.opacity = on ? '0' : '';
-    for (var j = 0; j < overlayObjects.length; j++) overlayObjects[j].visible = !on;
-    for (var k = 0; k < bodyRoots.length; k++) {
-      bodyRoots[k].root.visible = !on || bodyRoots[k] === target;
+    for (i = 0; i < overlayObjects.length; i++) {
+      var o = overlayObjects[i];
+      if (on) {
+        if (o.__wasVisible === undefined) o.__wasVisible = o.visible;
+        o.visible = false;
+      } else if (o.__wasVisible !== undefined) {
+        o.visible = o.__wasVisible;
+        delete o.__wasVisible;
+      }
     }
+    for (i = 0; i < bodyRoots.length; i++) {
+      var e = bodyRoots[i];
+      e.root.visible = !on || keep.indexOf(e) >= 0;
+    }
+  }
+
+  function visualRadius(hit) {
+    if (hit.__visR) return hit.__visR;
+    var hitR = (hit.geometry && hit.geometry.parameters && hit.geometry.parameters.radius) || 1;
+    var best = 0, p = hit.parent;
+    if (p) {
+      p.traverse(function (o) {
+        if (o === hit || !o.isMesh || !o.geometry) return;
+        var par = o.geometry.parameters;
+        if (!par || par.radius === undefined || par.radius >= hitR) return;
+        if (par.radius > best) best = par.radius;
+      });
+    }
+    hit.__visR = best > 0 ? best : hitR;
+    return hit.__visR;
+  }
+
+  function raySphere(o, d, c, r) {
+    var ox = o.x - c.x, oy = o.y - c.y, oz = o.z - c.z;
+    var b = ox * d.x + oy * d.y + oz * d.z;
+    var disc = b * b - (ox * ox + oy * oy + oz * oz - r * r);
+    if (disc < 0) return -1;
+    var sq = Math.sqrt(disc);
+    if (-b - sq > 0) return -b - sq;
+    if (-b + sq > 0) return -b + sq;
+    return -1;
+  }
+
+  function pickBody(objs, ray) {
+    var cam = ray.camera || window.__camera;
+    var ndc = ray.__ndc;
+    if (!cam || !ndc) return null;
+    var W = window.innerWidth, H = window.innerHeight;
+    var tanHalf = Math.tan(cam.fov * Math.PI / 360);
+    var O = ray.ray.origin, D = ray.ray.direction;
+    var front = null, near = null;
+    for (var i = 0; i < objs.length; i++) {
+      var o = objs[i];
+      if (!o.geometry || !o.geometry.parameters) continue;
+      if (!isShown(o)) continue;
+      o.getWorldPosition(_pv);
+      _pq.copy(_pv).applyMatrix4(cam.matrixWorldInverse);
+      if (_pq.z > -1e-3) continue;
+      var d = cam.position.distanceTo(_pv);
+      o.getWorldScale(_ps);
+      var sc = Math.abs(_ps.x);
+      var hitR = (o.geometry.parameters.radius || 1) * sc;
+      var visR = visualRadius(o) * sc;
+      var t = raySphere(O, D, _pv, visR);
+      if (t > 0) {
+        if (!front || t < front.d) front = { o: o, d: t, p: _pv.clone() };
+        continue;
+      }
+      _pq.copy(_pv).project(cam);
+      var px = Math.sqrt(Math.pow((_pq.x - ndc.x) * W * 0.5, 2) + Math.pow((_pq.y - ndc.y) * H * 0.5, 2));
+      var pxHit = (hitR / Math.sqrt(Math.max(d * d - hitR * hitR, 1e-6))) / tanHalf * (H * 0.5);
+      var score = px / Math.max(pxHit, MIN_PICK_PX);
+      if (score <= 1 && (!near || score < near.score)) near = { o: o, d: d, p: _pv.clone(), score: score };
+    }
+    var win = front || near;
+    if (!win) return null;
+    return [{ object: win.o, distance: win.d, point: win.p, face: null, faceIndex: 0 }];
+  }
+
+  function patchPicking() {
+    var proto = THREE.Raycaster.prototype;
+    if (proto.__bpPick) return;
+    proto.__bpPick = true;
+    var origSet = proto.setFromCamera;
+    var origHit = proto.intersectObjects;
+    proto.setFromCamera = function (coords) {
+      this.__ndc = coords;
+      return origSet.apply(this, arguments);
+    };
+    proto.intersectObjects = function (objects) {
+      var res = origHit.apply(this, arguments);
+      if (!objects || !objects.length || !objects[0] || !objects[0].userData || !objects[0].userData.body) return res;
+      if (!this.__ndc) return res;
+      return pickBody(objects, this) || res;
+    };
   }
 
   function upgradeGeometry(o) {
@@ -299,11 +441,19 @@
     collectOverlay(scene);
 
     var names = [];
+    scene.traverse(function (o) {
+      if (o.userData && o.userData.body && o.userData.body.id) {
+        var bid = o.userData.body.id;
+        if (!meta[bid]) meta[bid] = { data: o.userData.body, obj: o };
+      }
+    });
     earthRef = planets.earth;
     for (var k in planets) {
       var m = planets[k];
       var entry = { mesh: m, rate: SPIN[k], angle: m.rotation.y, drift: 0, cloud: null };
-      if (m.parent && m.parent.parent) bodyRoots.push({ mesh: m, root: m.parent.parent });
+      if (m.parent && m.parent.parent) {
+        bodyRoots.push({ mesh: m, root: m.parent.parent, zh: meta[k] ? meta[k].data.zh : '' });
+      }
       if (TINT[k] && m.material && m.material.color) m.material.color.setScalar(TINT[k]);
       fixAtmo(m, k);
       if (k === 'earth') entry.cloud = addClouds(m);
@@ -319,5 +469,6 @@
     step();
   };
 
+  patchPicking();
   boot();
 })();
